@@ -1,0 +1,150 @@
+
+Database Lab 2
+-------------------------------------------------------------------------------------------
+
+Yash Ubale
+2014CSB1040
+
+--------------------------------------------------------------------------------------------
+Creation of database (you need to create the database first and make this database as current one)
+
+CREATE DATABASE Lab_2;
+
+--------------------------------------------------------------------------------------------
+a) Creation of tables
+
+CREATE TABLE MovieExec(cert int not null primary key, name text not null, address text not null, netWorth int not null);
+CREATE TABLE Studio(name text not null primary key, registered_country text not null, PresidentCert int not null, foreign key(PresidentCert) references MovieExec(cert));
+CREATE TABLE MovieStar(name text not null primary key, address text not null, gender text not null, YearofBirth int not null);
+CREATE TABLE Movies(title text not null, year int not null, length int not null, genre text not null, studioName text not null, producerCert int not null, foreign key(producerCert) references MovieExec(cert), primary key(title, year), foreign key(studioName) references Studio(name));
+CREATE TABLE StarsIn(movieTitle text not null, movieYear int not null, starName text not null, primary key(movieTitle, movieYear, starName), foreign key(movieTitle, movieYear) references Movies(title, year), foreign key(starName) references MovieStar(name));
+
+
+
+NOTE : Movie length is in minutes
+
+---------------------------------------------------------------------------------------------
+b) Inserting into the tables
+
+
+INSERT INTO MovieExec values(1, 'James Cameron', 'New York', 2000000);
+INSERT INTO MovieExec values(2, 'Nolan', 'Boston', 2500000);
+INSERT INTO MovieExec values(3, 'David', 'Seattle', 100000);
+INSERT INTO MovieExec values(4, 'Mr. Carter', 'New Jersey', 150000);
+INSERT INTO MovieExec values(5, 'Lynna', 'Boston', 250000);
+INSERT INTO MovieExec values(6, 'Bay', 'Boulder', 20000);
+
+
+INSERT INTO Studio values('MGM', 'USA', 1);
+INSERT INTO Studio values('Lucas', 'USA', 2);
+INSERT INTO Studio values('Paramount', 'UK', 3);
+INSERT INTO Studio values('Phantom', 'India', 4);
+INSERT INTO Studio values('Maria', 'Spain', 5);
+INSERT INTO Studio values('Geroge Films', 'USA', 6);
+
+
+INSERT INTO MovieStar values('Leonardo', 'USA', 'Male', 1965);
+INSERT INTO MovieStar values('Kate', 'USA', 'Female', 1975);
+INSERT INTO MovieStar values('Mark', 'UK', 'Male', 1980);
+INSERT INTO MovieStar values('Matt', 'India', 'Male', 1982);
+INSERT INTO MovieStar values('Johnny', 'Germany', 'Male', 1965);
+INSERT INTO MovieStar values('Amy', 'Spain', 'Female', 1992);
+INSERT INTO MovieStar values('Jennifer', 'France', 'Female', 1993);
+
+
+INSERT INTO Movies values('Transformers', 2004, 150, 'Action', 'Geroge Films', 2);
+INSERT INTO Movies values('Titanic', 1999, 140, 'Romance', 'Phantom', 4);
+INSERT INTO Movies values('Love in the air', 2002, 127, 'Romance', 'MGM', 6);
+INSERT INTO Movies values('Madagascar', 1998, 113, 'Comedy', 'Lucas', 3);
+INSERT INTO Movies values('Tomorrow Never Dies', 2001, 134, 'Action', 'MGM', 2);
+INSERT INTO Movies values('Specter', 2000, 170, 'Romance', 'MGM', 5);
+INSERT INTO Movies values('Transformers Returns', 2007, 157, 'Action', 'Maria', 5);
+INSERT INTO Movies values('Star Wars', 2016, 142, 'Action', 'Lucas', 1);
+INSERT INTO Movies values('Dark Moon', 2005, 127, 'Action', 'Maria', 3);
+INSERT INTO Movies values('Is it me', 2001, 122, 'Comedy', 'MGM', 5);
+INSERT INTO Movies values('Little Things', 2009, 117, 'Comedy', 'Maria', 1);
+INSERT INTO Movies values('21 Jump Street', 1996, 163, 'Comedy', 'MGM', 1);
+INSERT INTO Movies values('Lion King', 1995, 116, 'Animation', 'Paramount', 2);
+
+
+INSERT INTO StarsIn values('Transformers', 2004, 'Mark');
+INSERT INTO StarsIn values('Is it me', 2001, 'Leonardo');
+INSERT INTO StarsIn values('Little Things', 2009, 'Amy');
+INSERT INTO StarsIn values('21 Jump Street', 1996, 'Jennifer');
+INSERT INTO StarsIn values('Titanic', 1999, 'Leonardo');
+INSERT INTO StarsIn values('Love in the air', 2002, 'Kate');
+INSERT INTO StarsIn values('Madagascar', 1998, 'Amy');
+INSERT INTO StarsIn values('Tomorrow Never Dies', 2001, 'Matt');
+INSERT INTO StarsIn values('Specter', 2000, 'Kate');
+INSERT INTO StarsIn values('Transformers Returns', 2007, 'Johnny');
+INSERT INTO StarsIn values('Star Wars',2016 , 'Mark');
+INSERT INTO StarsIn values('Dark Moon', 2005, 'Johnny');
+INSERT INTO StarsIn values('Lion King', 1995, 'Matt');
+
+
+----------------------------------------------------------------------------------------
+c) Required queries for asked questions
+
+Q-1)
+SELECT ms.name, COUNT (*) FROM MovieStar ms, StarsIn S WHERE S.starName = ms.name AND ms.YearofBirth > 1985 GROUP BY ms.name;
+
+Result : 
+'Amy','2'
+'Jennifer','1'
+
+Q-2) 
+SELECT DISTINCT St.name FROM Studio St, Movies mo WHERE Mo.genre = 'Action' AND Mo.studioName = st.name;
+
+Result : 
+'Geroge Films'
+'Lucas'
+'Maria'
+'MGM'
+
+Q-3)
+SELECT MovieExec.name, tempt.avgt FROM MovieExec, (SELECT mo.producerCert , AVG(mo.length) as avgt FROM MovieExec ME, Movies mo WHERE ME.cert = mo.producerCert GROUP BY mo.producerCert HAVING (COUNT(mo.producerCert) >= 2)) as tempt WHERE MovieExec.cert = tempt.producerCert;
+
+Result : 
+'James Cameron','140.6666666666666667'
+'Nolan','133.3333333333333333'
+'David','120.0000000000000000'
+'Lynna','149.6666666666666667'
+
+
+Q-4) 
+SELECT me.name, mo.title FROM MovieExec me, Movies mo WHERE me.netWorth > 100000 AND mo.studioName = 'MGM' AND mo.genre = 'Comedy' AND mo.producerCert = me.cert; 
+
+Result : 
+'Lynna','Is it me'
+'James Cameron','21 Jump Street'
+
+
+Q-5)
+SELECT Movie_1.title FROM Movies Movie_1, Movies Movie_2 WHERE Movie_1.length > Movie_2.length AND Movie_2.title = 'Titanic';
+
+Result :
+'Transformers'
+'Specter'
+'Transformers Returns'
+'Star Wars'
+'21 Jump Street'
+
+
+Q-6) 
+SELECT MovieExec_1.name FROM MovieExec MovieExec_1, MovieExec MovieExec_2 WHERE MovieExec_1.netWorth > MovieExec_2.netWorth AND MovieExec_2.name = 'James Cameron';
+
+Result :
+'Nolan'
+
+
+Q-7) 
+SELECT DISTINCT Actors.name FROM MovieStar Actors, StarsIn S, Movies Mo WHERE Actors.YearofBirth < 1980 AND S.starName = Actors.name AND S.movieTitle = Mo.title AND Mo.genre = 'Action';
+
+Result :
+'Johnny'
+
+Q-8)
+SELECT DISTINCT Actors.name FROM MovieStar Actors, StarsIn S, Movies Mo, MovieExec Me WHERE Actors.gender = 'Male' AND Me.name = 'James Cameron' AND Me.cert = Mo.producerCert AND S.movieTitle = Mo.title AND S.starName = Actors.name;
+
+Result :
+'Mark'

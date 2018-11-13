@@ -1,0 +1,58 @@
+Database Lab 1
+-------------------
+
+Yash Ubale
+2014CSB1040
+
+-------------------
+
+1) Creation of database (you need to create the database first and make this database as current one)
+
+CREATE DATABASE Lab_1;
+
+
+2) Creation of the tables
+
+CREATE TABLE MovieExec(name text not null, address text not null, cert int primary key not null, netWorth int not null);
+CREATE TABLE Movies(title text not null, year int not null, length int not null, genre text not null, studioName text not null, producerCert int not null, primary key(title, year), foreign key(producerCert) references MovieExec(cert) );
+CREATE TABLE StarsIn(movieTitle text not null, movieYear int not null, starName text not null, primary key(movieTitle, movieYear, starName));
+CREATE TABLE MovieStar(name text not null primary key, address text not null, gender text not null, birthdate int not null);
+CREATE TABLE Studio(name text not null primary key, address text not null, presidentCert int not null, foreign key(presidentCert) references MovieExec(cert) );
+
+
+3) Insertion into the tables
+
+INSERT INTO MovieExec values('Ram','Mumbai',123456,100000);
+INSERT INTO MovieExec values('Sanjay','Delhi',123457,200000);
+INSERT INTO MovieExec values('Ayan','Mumbai',123458,9000000);
+INSERT INTO Studio values('MGM','Mumbai',123456);
+INSERT INTO Studio values('Nicks','Delhi',123457);
+INSERT INTO Studio values('Victoria','Mumbai',123458);
+INSERT INTO Movies values('Love in the air', 2009 , 2 , 'Romance', 'MGM', 123456);
+INSERT INTO Movies values('Love affair', 1999 , 3 , 'Crime', 'Nicks', 123457);
+INSERT INTO Movies values('Titanic', 2009 , 3 , 'Romance', 'Victoria', 123458);
+INSERT INTO Movies values('Fury Road', 1980 , 2 , 'Action', 'Nicks', 123457);
+INSERT INTO MovieStar values('Leonardo', 'New York', 'Male', 1965);
+INSERT INTO MovieStar values('Kate', 'New York', 'Female', 1968);
+INSERT INTO MovieStar values('Jack', 'New York', 'Male', 1975);
+INSERT INTO MovieStar values('George', 'Seattle', 'Male', 1943);
+INSERT INTO MovieStar values('Michael', 'Munich', 'Male', 1979);
+INSERT INTO StarsIn values('Titanic', 2009, 'Leonardo');
+INSERT INTO StarsIn values('Fury Road', 1980, 'George');
+INSERT INTO StarsIn values('Love in the air', 2009, 'Michael');
+INSERT INTO StarsIn values('Love affair', 1999, 'Kate');
+INSERT INTO StarsIn values('Titanic', 2009, 'Kate');
+
+4) Queries for the questions asked
+
+	1) SELECT address FROM Studio WHERE name='MGM';
+
+	2) SELECT name FROM MovieExec WHERE netWorth>=1000000;
+
+	3) SELECT starName FROM StarsIn WHERE movieYear=1980 OR movieTitle LIKE '%Love%';
+
+	4) SELECT MovieExec.name FROM Studio, MovieExec WHERE Studio.name ='MGM' AND Studio.presidentCert = MovieExec.cert;
+
+	5) SELECT StarsIn.starName FROM StarsIn, MovieStar WHERE MovieStar.gender = 'Male' AND StarsIn.movieTitle = 'Titanic' AND StarsIn.starName = MovieStar.name;
+
+	6) SELECT Studio.name FROM Studio, MovieExec WHERE MovieExec.netWorth > 100000 AND Studio.presidentCert = MovieExec.cert;

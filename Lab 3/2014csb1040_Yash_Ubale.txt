@@ -1,0 +1,151 @@
+Database Lab - 3
+------------------------------------------------------------------------------------------------
+Yash Ubale
+2014csb1040
+
+------------------------------------------------------------------------------------------------
+Creation of database (you need to create the database first and make this database as current one)
+
+CREATE DATABASE Lab_3;
+------------------------------------------------------------------------------------------------
+
+Create tables-
+
+
+CREATE TABLE Classes(class text not null primary key, type text not null, country text not null, numGuns int not null, bore int not null, displacement int not null);
+CREATE TABLE Ships(name text not null primary key, class text not null, yearlaunched int not null, foreign key(class) references Classes(class));
+CREATE TABLE Battles(name text not null primary key, year int not null);
+CREATE TABLE Outcomes(ship text not null, battle text not null, result text not null, foreign key(ship) references Ships(name), foreign key(battle) references Battles(name));
+
+
+
+-------------------------------------------------------------------------------------------------
+
+Insertion into the tables-
+
+
+INSERT INTO Classes values('Kongo', 'bc', 'USA', 12, 16, 1000);
+INSERT INTO Classes values('Virat', 'bb', 'India', 10, 28, 2000);
+INSERT INTO Classes values('Eagle', 'bb', 'USA', 15, 19, 1700);
+INSERT INTO Classes values('Vulture', 'bc', 'Russia', 13, 21, 900);
+INSERT INTO Classes values('Titan', 'bb', 'Germany', 25, 16, 1800);
+
+INSERT INTO Ships values('ABC123', 'Virat', 2001);
+INSERT INTO Ships values('ABC149', 'Virat', 2005);
+INSERT INTO Ships values('FGP123', 'Kongo', 2000);
+INSERT INTO Ships values('KOP190', 'Kongo', 1999);
+INSERT INTO Ships values('KOP122', 'Kongo', 1990);
+INSERT INTO Ships values('EAG999', 'Eagle', 1995);
+INSERT INTO Ships values('EAG111', 'Eagle', 1993);
+INSERT INTO Ships values('EAG119', 'Eagle', 1994);
+INSERT INTO Ships values('VUL124', 'Vulture', 1985);
+INSERT INTO Ships values('VUL143', 'Vulture', 1999);
+INSERT INTO Ships values('TIT982', 'Titan', 2001);
+INSERT INTO Ships values('TIT124', 'Titan', 1992);
+
+INSERT INTO Battles Values('Gulf', 2006);
+INSERT INTO Battles Values('Yemen', 2014);
+INSERT INTO Battles Values('French', 2011);
+INSERT INTO Battles Values('Korean', 2008);
+INSERT INTO Battles Values('India', 2000);
+
+INSERT INTO Outcomes Values('ABC123', 'Yemen', 'OK');
+INSERT INTO Outcomes Values('ABC149', 'Gulf', 'Damaged');
+INSERT INTO Outcomes Values('EAG999', 'Yemen', 'Sunk');
+INSERT INTO Outcomes Values('EAG111', 'French', 'Sunk');
+INSERT INTO Outcomes Values('VUL124', 'India', 'Sunk');
+INSERT INTO Outcomes Values('TIT982', 'Korean', 'OK');
+INSERT INTO Outcomes Values('KOP122', 'Gulf', 'OK');
+INSERT INTO Outcomes Values('KOP190', 'Korean', 'Damaged');
+INSERT INTO Outcomes Values('TIT124', 'French', 'Damaged');
+
+
+
+----------------------------------------------------------------------------------------------------
+Step 2 - 
+
+1)	a) SELECT DISTINCT country FROM Classes, (SELECT MAX(numGuns) as maxguns FROM Classes) as tempt WHERE Classes.numGuns = maxguns;
+		Result - 
+		'Germany'
+	b) SELECT DISTINCT country FROM Classes WHERE Classes.numGuns >= ALL(SELECT numGuns FROM Classes);
+		Result -
+		'Germany'
+	c) SELECT DISTINCT country FROM Classes WHERE Classes.numGuns IN (SELECT MAX(numGuns) as maxguns FROM Classes);
+		Result -
+		'Germany'
+
+
+2)	a) SELECT DISTINCT class FROM Outcomes, Ships WHERE Outcomes.result = 'Sunk' AND Ships.name = Outcomes.ship;
+		Result - 
+		'Eagle'
+		'Vulture'
+	b) SELECT DISTINCT class FROM Ships WHERE EXISTS (SELECT ship FROM Outcomes WHERE Outcomes.result = 'Sunk' AND Ships.name = Outcomes.ship);
+		Result - 
+		'Eagle'
+		'Vulture'
+	c) SELECT DISTINCT class FROM Ships WHERE Ships.name = ANY(SELECT ship FROM Outcomes WHERE Outcomes.result = 'Sunk')
+		Result - 
+		'Eagle'
+		'Vulture'
+
+
+3)	a) SELECT name FROM Ships, Classes WHERE Ships.class = Classes.class AND Classes.bore = 16;
+		Result - 
+		'FGP123'
+		'KOP190'
+		'KOP122'
+		'TIT982'
+		'TIT124'
+	b) SELECT name FROM Ships WHERE EXISTS (SELECT class FROM Classes WHERE Classes.class = Ships.class AND Classes.bore = 16);
+		Result - 
+		'FGP123'
+		'KOP190'
+		'KOP122'
+		'TIT982'
+		'TIT124' 
+	c) 	SELECT name FROM Ships, Classes WHERE Classes.bore = 16 AND Ships.class IN (Classes.class);
+		Result - 
+		'FGP123'
+		'KOP190'
+		'KOP122'
+		'TIT982'
+		'TIT124'
+
+
+4)	a) SELECT DISTINCT battle FROM Outcomes, Classes, Ships WHERE Classes.class = 'Kongo' AND Ships.class = 'Kongo' AND Outcomes.ship = Ships.name;
+		Result - 
+		'Gulf'
+		'Korean'
+	b) SELECT DISTINCT battle FROM Outcomes WHERE EXISTS (SELECT name FROM Ships WHERE Ships.class = 'Kongo' AND Outcomes.ship = Ships.name);
+		Result - 
+		'Gulf'
+		'Korean'
+	c) SELECT DISTINCT battle FROM Outcomes WHERE Outcomes.ship = ANY (SELECT Ships.name FROM Ships  WHERE Ships.class = 'Kongo');
+		Result - 
+		'Gulf'
+		'Korean' 
+
+
+----------------------------------------------------------------------------------------------------
+Step 3 - 
+
+1)	SELECT COUNT(*) FROM Classes WHERE Classes.type = 'bb';
+	Result - 
+	'3'
+
+2)	SELECT AVG(numGuns) FROM Ships, Classes WHERE Ships.class = Classes.class AND Classes.type = 'bb';
+	Result - 
+	'16.4285714285714286'
+
+3)	SELECT class, COUNT(*) FROM Ships, (SELECT ship as namesofships FROM Outcomes WHERE Outcomes.result = 'Sunk') as tempt WHERE Ships.name = namesofships GROUP BY Ships.class;
+	Result - 
+	'Eagle','2'
+	'Vulture','1'
+
+4)	SELECT class, MIN(yearlaunched) FROM Ships GROUP BY Ships.class;
+	Result - 
+	'Kongo',1990
+	'Eagle',1993
+	'Titan',1992
+	'Virat',2001
+	'Vulture',1985

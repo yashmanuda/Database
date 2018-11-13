@@ -1,0 +1,145 @@
+Yash Ubale
+2014csb1040
+Lab Test
+---------------------------
+
+a) Creationg of tables, insertion into tables, creation of trigger functions
+
+DROP TABLE IF EXISTS SavingsAccount;
+DROP TABLE IF EXISTS LoanAccount;
+DROP TABLE IF EXISTS PaidLoans;
+DROP TABLE IF EXISTS Customer;
+
+CREATE TABLE Customer(cno int primary key, name text not null, age int not null, address text not null);
+CREATE TABLE SavingsAccount(Accno int primary key, balance int null, custnum int not null references Customer(cno) );
+CREATE TABLE LoanAccount(Accno int primary key, custnum int not null references Customer(cno), total_loaned_amount int not null, balance_to_be_paid int not null);
+CREATE TABLE PaidLoans(Accno int primary key, custnum int not null references Customer(cno), total_loaned_amount int not null, timestamp_when_payment_done TIMESTAMP not null);
+
+INSERT INTO Customer values(1,'Yash',22,'Aurangabad');
+INSERT INTO Customer values(2,'Skand',21,'Carnal');
+INSERT INTO Customer values(3,'Himanshu',23,'Jhansi');
+INSERT INTO Customer values(4,'Harshit',22,'Jaipur');
+INSERT INTO Customer values(5,'Shailendar',23,'Jharkhand');
+INSERT INTO Customer values(6,'Siddhart',22,'Faridabad');
+
+INSERT INTO SavingsAccount values(11, 12345, 1);
+INSERT INTO SavingsAccount values(12, 23456, 2);
+INSERT INTO SavingsAccount values(13, 34567, 3);
+INSERT INTO SavingsAccount values(14, 45678, 4);
+INSERT INTO SavingsAccount values(15, 56789, 5);
+
+INSERT INTO LoanAccount values(11, 1, 5000, 2500);
+INSERT INTO LoanAccount values(12, 2, 4000, 2000);
+INSERT INTO LoanAccount values(13, 3, 3000, 1500);
+INSERT INTO LoanAccount values(14, 4, 2000, 1000);
+INSERT INTO LoanAccount values(15, 5, 1000, 500);
+INSERT INTO LoanAccount values(16, 6, 1000, 0);
+
+
+CREATE OR REPLACE FUNCTION LoanAccountTrigger()
+RETURNS TRIGGER AS $$
+BEGIN
+	IF NEW.balance_to_be_paid = 0 THEN
+    	INSERT INTO PaidLoans values(NEW.Accno, NEW.custnum, NEW.total_loaned_amount, now());
+        DELETE FROM LoanAccount WHERE LoanAccount.Accno = NEW.Accno;
+        RETURN NEW;
+    END IF;
+    IF NEW.balance_to_be_paid > OLD.balance_to_be_paid THEN
+    	UPDATE LoanAccount SET balance_to_be_paid = OLD.balance_to_be_paid WHERE accno = OLD.accno;
+        RETURN OLD;
+    ELSE
+    	RETURN NEW;
+    END IF;
+    
+END; $$
+LANGUAGE PLPGSQL;
+
+DROP TRIGGER IF EXISTS updateLoan ON LoanAccount;
+
+CREATE TRIGGER updateLoan
+AFTER UPDATE 
+ON LoanAccount
+FOR EACH ROW
+EXECUTE PROCEDURE LoanAccountTrigger();
+
+
+CREATE OR REPLACE FUNCTION PreventDeletion()
+RETURNS TRIGGER AS $$
+BEGIN
+	IF OLD.balance_to_be_paid > 0 THEN
+		RAISE NOTICE 'CANNOT DELETE';
+    	RETURN NULL;
+	END IF;
+    RETURN OLD;
+END; $$
+LANGUAGE PLPGSQL;
+
+DROP TRIGGER IF EXISTS prevDelete ON LoanAccount;
+
+CREATE TRIGGER prevDelete
+BEFORE DELETE 
+ON LoanAccount
+FOR EACH ROW
+EXECUTE PROCEDURE PreventDeletion();
+
+--------------------------------------------------------
+
+Question 1)
+
+UPDATE LoanAccount SET balance_to_be_paid = 700 WHERE accno = 11;
+SELECT * FROM LoanAccount;
+
+Result - 
+12,2,4000,2000
+13,3,3000,1500
+14,4,2000,1000
+15,5,1000,500
+16,6,1000,0
+11,1,5000,700
+
+UPDATE LoanAccount SET balance_to_be_paid = 0 WHERE accno = 13;
+SELECT * FROM PaidLoans;
+
+Result - 
+13,3,3000,'2018-04-19 17:36:35.856112'
+
+UPDATE LoanAccount SET balance_to_be_paid = 800 WHERE accno = 15;
+SELECT * FROM LoanAccount;
+
+Result - 
+12,2,4000,2000
+14,4,2000,1000
+16,6,1000,0
+11,1,5000,700
+15,5,1000,500
+
+----------------------------------------------------------
+
+Question 2) 
+
+DELETE FROM LoanAccount WHERE Accno = 12;
+
+Result - 
+NOTICE:  CANNOT DELETE
+DELETE 0
+
+
+SELECT * FROM LoanAccount;
+
+Result - 
+12,2,4000,2000
+14,4,2000,1000
+16,6,1000,0
+11,1,5000,700
+15,5,1000,500
+
+DELETE FROM LoanAccount WHERE Accno = 16;
+SELECT * FROM LoanAccount;
+
+Result - 
+12,2,4000,2000
+14,4,2000,1000
+11,1,5000,700
+15,5,1000,500
+
+-------------------------------------------------------
