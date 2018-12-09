@@ -1,1 +1,1 @@
-College assignments for Database course.
+Sample assignments for database course.
